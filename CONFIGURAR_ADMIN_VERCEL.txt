@@ -1,0 +1,24 @@
+YAMAUCHI GARAGE — ATIVAR O ACESSO ADMINISTRATIVO
+
+1. Na Vercel, abra o projeto yamauchi-garage-erp.
+2. Entre em Settings > Environment Variables.
+3. Crie estas três variáveis para Production, Preview e Development:
+
+ADMIN_EMAIL
+Valor: yamauthigaragem@gmail.com
+
+ADMIN_PASSWORD
+Valor: escolha sua senha privada com no mínimo 8 caracteres.
+
+ADMIN_SESSION_SECRET
+Valor: uma sequência longa e aleatória com pelo menos 32 caracteres.
+Exemplo de formato (não copie este): letras-numeros-simbolos-com-mais-de-32-caracteres
+
+4. Salve as variáveis.
+5. Faça um novo Deploy na Vercel.
+6. Abra o site, clique em Entrar / Cadastro e use:
+   E-mail: yamauthigaragem@gmail.com
+   Senha: a senha que você colocou em ADMIN_PASSWORD.
+
+O painel administrativo abrirá automaticamente.
+A senha não fica no GitHub nem no navegador.

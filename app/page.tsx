@@ -70,10 +70,26 @@ export default function App() {
   const requireCustomer = (next: 'shop' | 'service' | 'portal') => { if (!current) { setShowAccess(true); return; } setView(next); };
 
   useEffect(() => {
-    if (!supabase) return;
     let active = true;
 
+    async function restoreAdminSession() {
+      try {
+        const response = await fetch('/api/admin/session', { cache: 'no-store' });
+        const data = await response.json();
+        if (active && data.authenticated) {
+          setCurrent({ id: 'admin-owner', name: 'Administrador Yamauchi Garage', email: OWNER_EMAIL, password: '', phone: shopInfo.phone, role: 'admin' });
+          setView('admin');
+          return true;
+        }
+      } catch {
+        // Continua para a autenticação Supabase quando disponível.
+      }
+      return false;
+    }
+
     async function restoreSession() {
+      if (await restoreAdminSession()) return;
+      if (!supabase) return;
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user || !active) return;
       const { data: profile, error: profileError } = await supabase.from('profiles').select('full_name, phone, role').eq('id', auth.user.id).maybeSingle();
@@ -89,14 +105,14 @@ export default function App() {
       setCurrent(user); setView(role === 'admin' ? 'admin' : 'portal');
     }
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+    const listener = supabase?.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') setShowPasswordReset(true);
     });
 
     void restoreSession();
     return () => {
       active = false;
-      listener.subscription.unsubscribe();
+      listener?.data.subscription.unsubscribe();
     };
   }, []);
 
@@ -105,6 +121,24 @@ export default function App() {
     const data = new FormData(event.currentTarget);
     const email = String(data.get('email')).trim().toLowerCase();
     const password = String(data.get('password'));
+
+    if (loginMode === 'login' && email === OWNER_EMAIL) {
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const result = await response.json();
+        if (response.ok && result.authenticated) {
+          const admin: UserAccount = { id: 'admin-owner', name: 'Administrador Yamauchi Garage', email, password: '', phone: shopInfo.phone, role: 'admin' };
+          setCurrent(admin); setShowAccess(false); setView('admin'); tell('Bem-vindo ao painel administrativo!'); return;
+        }
+        if (!supabase) return tell(result.message || 'E-mail ou senha administrativa incorretos.');
+      } catch {
+        if (!supabase) return tell('Não foi possível acessar o servidor de autenticação.');
+      }
+    }
 
     if (supabase) {
       if (loginMode === 'login') {
@@ -178,7 +212,7 @@ export default function App() {
         <nav className="flex flex-wrap items-center gap-1 text-xs font-bold">
           <button onClick={() => setView('home')} className="rounded-lg px-3 py-2 hover:bg-white/10">Início</button><button onClick={() => requireCustomer('service')} className="rounded-lg px-3 py-2 hover:bg-white/10">Serviços</button><button onClick={() => setView('shop')} className="rounded-lg px-3 py-2 hover:bg-white/10">Loja</button>
           {current?.role === 'admin' && <button onClick={() => setView('admin')} className="rounded-lg bg-amber-400 px-3 py-2 text-slate-950"><Settings className="mr-1 inline h-3.5 w-3.5" />Admin</button>}
-          {current ? <><button onClick={() => setView('portal')} className="rounded-lg px-3 py-2 hover:bg-white/10"><Bell className="mr-1 inline h-3.5 w-3.5" />{customerNotices.length || ''}</button><button onClick={() => { void supabase?.auth.signOut(); setCurrent(null); setView('home'); }} className="rounded-lg px-3 py-2 hover:bg-white/10"><LogOut className="inline h-3.5 w-3.5" /></button></> : <button onClick={() => setShowAccess(true)} className="rounded-lg bg-blue-600 px-3 py-2"><User className="mr-1 inline h-3.5 w-3.5" />Entrar / Cadastro</button>}
+          {current ? <><button onClick={() => setView('portal')} className="rounded-lg px-3 py-2 hover:bg-white/10"><Bell className="mr-1 inline h-3.5 w-3.5" />{customerNotices.length || ''}</button><button onClick={() => { void fetch('/api/admin/logout', { method: 'POST' }); void supabase?.auth.signOut(); setCurrent(null); setView('home'); }} className="rounded-lg px-3 py-2 hover:bg-white/10"><LogOut className="inline h-3.5 w-3.5" /></button></> : <button onClick={() => setShowAccess(true)} className="rounded-lg bg-blue-600 px-3 py-2"><User className="mr-1 inline h-3.5 w-3.5" />Entrar / Cadastro</button>}
         </nav>
       </div>
     </header>
@@ -200,7 +234,7 @@ export default function App() {
 function Home({ onService, onShop }: { onService: () => void; onShop: () => void }) { return <div className="space-y-8"><section className="rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 px-7 py-14 text-white md:px-14"><p className="mb-3 text-sm font-black uppercase tracking-[.2em] text-amber-400">Auto center no Japão</p><h1 className="max-w-3xl text-4xl font-black leading-tight md:text-6xl">Serviços, peças e acompanhamento em um só lugar.</h1><p className="mt-5 max-w-2xl text-slate-300">Cada cliente tem seu próprio acesso para solicitar serviços, enviar fotos dos danos, acompanhar orçamentos e comprar produtos automotivos.</p><div className="mt-8 flex flex-wrap gap-3"><button onClick={onService} className="rounded-xl bg-amber-400 px-6 py-3 text-sm font-black text-slate-950">SOLICITAR PRÉ-AVALIAÇÃO</button><button onClick={onShop} className="rounded-xl border border-white/40 px-6 py-3 text-sm font-black">ENTRAR NA LOJA</button></div></section><div className="grid gap-4 md:grid-cols-3"><Feature icon={<Camera />} title="Fotos dos danos" text="Envie imagens do veículo para uma pré-avaliação visual." /><Feature icon={<ShieldCheck />} title="Área do cliente" text="Histórico particular de serviços, orçamentos e pedidos." /><Feature icon={<Store />} title="Loja automotiva" text="Peças, acessórios, limpeza e manutenção com pedido online." /></div></div>; }
 function Feature({ icon, title, text }: { icon: ReactNode; title: string; text: string }) { return <div className="rounded-2xl border bg-white p-6"><div className="mb-4 text-blue-800">{icon}</div><h2 className="font-black">{title}</h2><p className="mt-2 text-sm text-slate-500">{text}</p></div>; }
 
-function AccessModal({ mode, setMode, close, submit, recover }: { mode: 'login' | 'register'; setMode: (m: 'login' | 'register') => void; close: () => void; submit: (e: FormEvent<HTMLFormElement>) => void; recover: (email: string) => void }) { const [email, setEmail] = useState(''); return <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4"><form onSubmit={submit} className="w-full max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-2xl"><div className="flex justify-between"><h2 className="text-xl font-black">{mode === 'login' ? 'Acessar minha conta' : 'Criar conta de cliente'}</h2><button type="button" onClick={close}>✕</button></div>{mode === 'register' && <><input name="name" placeholder="Nome completo" className="input" required /><input name="phone" placeholder="Telefone / WhatsApp" className="input" required /></>}<input name="email" type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} className="input" required /><input name="password" type="password" placeholder="Senha" className="input" required /><button className="w-full rounded-xl bg-blue-900 py-3 text-sm font-black text-white">{mode === 'login' ? 'ENTRAR' : email.toLowerCase() === OWNER_EMAIL ? 'CRIAR ACESSO ADMIN' : 'CRIAR MEU ID'}</button>{mode === 'login' && <button type="button" onClick={() => recover(email)} className="w-full text-sm font-bold text-amber-700">Esqueci minha senha</button>}<button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="w-full text-sm font-bold text-blue-800">{mode === 'login' ? 'Ainda não tenho cadastro' : 'Já tenho cadastro'}</button></form></div>; }
+function AccessModal({ mode, setMode, close, submit, recover }: { mode: 'login' | 'register'; setMode: (m: 'login' | 'register') => void; close: () => void; submit: (e: FormEvent<HTMLFormElement>) => void; recover: (email: string) => void }) { const [email, setEmail] = useState(''); return <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4"><form onSubmit={submit} className="w-full max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-2xl"><div className="flex justify-between"><h2 className="text-xl font-black">{mode === 'login' ? 'Entrar — cliente ou administrador' : 'Criar conta de cliente'}</h2><button type="button" onClick={close}>✕</button></div>{mode === 'register' && <><input name="name" placeholder="Nome completo" className="input" required /><input name="phone" placeholder="Telefone / WhatsApp" className="input" required /></>}<input name="email" type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} className="input" required /><input name="password" type="password" placeholder="Senha" className="input" required /><button className="w-full rounded-xl bg-blue-900 py-3 text-sm font-black text-white">{mode === 'login' ? (email.toLowerCase() === OWNER_EMAIL ? 'ENTRAR COMO ADMINISTRADOR' : 'ENTRAR') : email.toLowerCase() === OWNER_EMAIL ? 'CRIAR ACESSO ADMIN' : 'CRIAR MEU ID'}</button>{mode === 'login' && <button type="button" onClick={() => recover(email)} className="w-full text-sm font-bold text-amber-700">Esqueci minha senha</button>}<button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} className="w-full text-sm font-bold text-blue-800">{mode === 'login' ? 'Ainda não tenho cadastro' : 'Já tenho cadastro'}</button></form></div>; }
 
 function PasswordResetModal({ close, update }: { close: () => void; update: (password: string) => void }) { const [password, setPassword] = useState(''); const [confirm, setConfirm] = useState(''); return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/80 p-4"><form onSubmit={(event) => { event.preventDefault(); if (password !== confirm) return; void update(password); }} className="w-full max-w-md space-y-4 rounded-3xl bg-white p-7 shadow-2xl"><div className="flex justify-between"><div><p className="text-xs font-black text-amber-600">ACESSO SEGURO</p><h2 className="text-xl font-black">Criar nova senha</h2></div><button type="button" onClick={close}>✕</button></div><p className="text-sm text-slate-500">Digite uma nova senha com pelo menos 8 caracteres.</p><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Nova senha" className="input" minLength={8} required /><input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Confirmar nova senha" className="input" minLength={8} required />{confirm && password !== confirm && <p className="text-sm font-bold text-red-600">As senhas não são iguais.</p>}<button disabled={!password || password !== confirm} className="w-full rounded-xl bg-blue-900 py-3 text-sm font-black text-white disabled:opacity-40">SALVAR NOVA SENHA</button></form></div>; }
 
