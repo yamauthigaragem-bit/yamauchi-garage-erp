@@ -198,3 +198,10 @@
     box-shadow: none !important;
   }
 }
+
+@media print {
+  body * { visibility: hidden; }
+  #corporate-document, #corporate-document * { visibility: visible; }
+  #corporate-document { position: absolute; inset: 0; width: 100%; }
+  @page { size: A4; margin: 6mm; }
+}

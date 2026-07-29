@@ -1,0 +1,43 @@
+YAMAUCHI GARAGE — NOVA VERSÃO COMPLETA
+
+Esta versão mantém o acesso administrativo já configurado na Vercel e adiciona:
+
+- Showroom atualizável com imagens e vídeos.
+- Serviços em cartões visuais, com foto, descrição, preço inicial, ocultar e excluir.
+- Veículos à venda com foto, vídeo, preço, status e simulador de financiamento.
+- Aviso obrigatório de que o financiamento é apenas uma simulação.
+- Loja de peças e acessórios com fotos, estoque, ocultar e excluir.
+- Solicitação de pré-avaliação com até seis fotos.
+- Painel de solicitações e resposta rápida pelo WhatsApp.
+- Cadastro automático de clientes recebidos nas solicitações.
+- Exclusão de clientes com confirmação.
+- Central de Documentos: Mitsumori, Invoice, Seikyusho e Recibo.
+- Modelo A4 bilíngue inspirado no documento corporativo fornecido.
+- Cálculo automático de subtotal, imposto de 10% e total.
+- Impressão e opção Salvar como PDF pelo navegador.
+
+PUBLICAÇÃO
+
+1. Extraia o ZIP.
+2. Copie o conteúdo da pasta yamauchi-garage para o repositório yamauchi-garage-erp.
+3. Substitua os arquivos existentes.
+4. No GitHub Desktop, faça o commit:
+   "Nova versão completa Yamauchi Garage"
+5. Clique em Push origin.
+6. A Vercel publicará automaticamente.
+
+VARIÁVEIS DA VERCEL — MANTER
+
+ADMIN_EMAIL
+ADMIN_PASSWORD
+ADMIN_SESSION_SECRET
+
+IMPORTANTE
+
+Os dados cadastrados nesta versão ficam no armazenamento do navegador (localStorage).
+Eles funcionam para demonstração e uso em um único dispositivo/navegador. Para vários
+funcionários e clientes compartilharem os mesmos dados, a próxima etapa é conectar os
+módulos ao Supabase.
+
+Os alertas aparecem no painel. O botão WhatsApp abre a conversa pronta. Alertas automáticos
+sem abrir o WhatsApp exigem WhatsApp Business API e configuração externa.
