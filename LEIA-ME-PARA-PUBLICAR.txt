@@ -1,0 +1,41 @@
+YAMAUCHI GARAGE — PUBLICAÇÃO DO ADMINISTRADOR
+
+Administrador oficial:
+yamauthigaragem@gmail.com
+
+IMPORTANTE:
+A senha não fica gravada no código. Isso protege o sistema.
+Use a senha que você criou no Supabase. Caso não lembre, clique em “Esqueci minha senha”.
+
+PASSO 1 — SUPABASE
+1. Abra o projeto da Yamauchi Garage no Supabase.
+2. Abra SQL Editor > New query.
+3. Abra o arquivo supabase/INSTALAR_ADMIN_PRONTO.sql.
+4. Copie tudo, cole no SQL Editor e clique em Run.
+5. No resultado final, confirme que aparece: role = admin.
+
+Caso a conta ainda não exista:
+1. Supabase > Authentication > Users > Add user.
+2. E-mail: yamauthigaragem@gmail.com
+3. Crie uma senha temporária segura.
+4. Marque o e-mail como confirmado, se essa opção aparecer.
+5. Execute novamente supabase/INSTALAR_ADMIN_PRONTO.sql.
+
+PASSO 2 — VARIÁVEIS DA VERCEL
+Confirme em Vercel > Environment Variables:
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+PASSO 3 — PUBLICAR
+Substitua os arquivos do repositório pelos arquivos desta pasta, faça Commit e Push no GitHub Desktop.
+A Vercel publicará automaticamente.
+
+PASSO 4 — TESTAR
+1. Abra o site.
+2. Clique em Entrar / Cadastro.
+3. Entre com yamauthigaragem@gmail.com.
+4. O botão dourado “Admin” deve aparecer.
+
+RECUPERAÇÃO DE SENHA
+Digite o e-mail no login e clique em “Esqueci minha senha”.
+Ao abrir o link recebido por e-mail, o aplicativo mostrará a tela para criar a nova senha.
